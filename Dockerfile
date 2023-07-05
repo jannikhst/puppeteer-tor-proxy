@@ -31,8 +31,5 @@ ENV RUN_HEADLESS=true
 # Copy the application code
 COPY tor.ts app.ts ./
 
-# Expose the port your application listens on
-EXPOSE 3000
-
 # Specify the command to run your application
 CMD [ "ts-node", "app.ts" ]

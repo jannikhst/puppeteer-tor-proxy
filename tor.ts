@@ -70,7 +70,10 @@ export class TorInstance {
         } catch (e) {
         }
 
-        const torPath = await execPromise('which tor');
+        const torPath = await execPromise('which tor').catch(e => {
+            console.log('tor not found, please install tor');
+            process.exit(1);
+        });
 
         // run tor in a child process and wait till stdout contains "100%"
         const filePath = path.join(__dirname, 'torrc');
@@ -110,11 +113,16 @@ export class TorInstance {
         const curlCmd = `curl --socks5 ${ip + ':' + port} --socks5-hostname ${ip + ':' + port} -s http://ip-api.com/json/`;
 
         const start = Date.now();
-        const res = await execPromise(curlCmd);
-        const json = JSON.parse(res);
-        const api = ApiIpResult.fromJson(json);
-        // if api is localhost or something, try again
-
+        const api = await execPromise(curlCmd)
+            .then(r => {
+                try {
+                    const json = JSON.parse(r);
+                    return ApiIpResult.fromJson(json);
+                } catch (error) {
+                    return ApiIpResult.unknown();
+                }
+            })
+            .catch(e => ApiIpResult.unknown());
 
         const end = Date.now();
 
@@ -123,7 +131,7 @@ export class TorInstance {
         if (pid) {
             return new TorInstance(() => {
                 return new Promise<void>(async (resolve, reject) => {
-                    await execPromise(`kill ${pid}`);
+                    await execPromise(`kill ${pid}`).catch(e => console.log(e));
                     await TorInstance.waitTillTorStopped();
                     resolve();
                 });
@@ -195,5 +203,25 @@ class ApiIpResult {
     get info() {
         // [ip] country, region, city
         return `[${this.ip}]: ${this.country}, ${this.region}, ${this.city}`;
+    }
+
+    static unknown(): ApiIpResult {
+        const json = {
+            "status": "success",
+            "country": "Unknown Country",
+            "countryCode": "XX",
+            "region": "XX",
+            "regionName": "Unknown Region",
+            "city": "Unknown City",
+            "zip": "XXXXX",
+            "lat": 0,
+            "lon": 0,
+            "timezone": "Europe/Berlin",
+            "isp": "Unknown ISP",
+            "org": "Unknown Organization",
+            "as": "AS0",
+            "query": "XXX.XXX.XXX.XXX"
+        };
+        return ApiIpResult.fromJson(json);
     }
 }

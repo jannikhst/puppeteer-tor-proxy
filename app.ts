@@ -47,7 +47,7 @@ async function execute(): Promise<void> {
         const start = Date.now();
         if (wrongGeozoneIps.has(tor.info.ip)) {
             console.log('🟡  Had issues with this IP before, switching...');
-            console.log(`removing ${tor.info.ip} from pool`);
+            console.log(`removing ${tor.info.ip} from pool (blocked-count: ${wrongGeozoneIps.size})`);
             ips.delete(tor.info.ip);
             await tor.close();
             tor = await TorInstance.create();
