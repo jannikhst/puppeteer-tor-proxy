@@ -1,0 +1,22 @@
+{
+  "name": "antenne_bayern",
+  "version": "1.0.0",
+  "description": "A sample command-line application with an entrypoint in `bin/`, library code in `lib/`, and example unit test in `test/`.",
+  "main": "app.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "puppeteer": "^20.7.4",
+    "puppeteer-extra-plugin-adblocker": "^2.13.6",
+    "puppeteer-extra-plugin-anonymize-ua": "^2.4.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
