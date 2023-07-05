@@ -22,31 +22,23 @@ export class TorInstance {
     }
 
     static async existsInstance(): Promise<number> {
-        return new Promise<number>((resolve, reject) => {
-            // ps aux | grep '/usr/bin/tor -f /app/torrc' | grep -v grep | awk '{print $1}
-            exec(`ps aux | grep '/bin/tor -f ${path.join(__dirname, 'torrc')}'`, (err, stdout, stderr) => {
-                if (err) {
-                    reject(err);
-                    return;
+        try {
+            const stdout = await execPromise(`ps aux | grep '/bin/tor -f ${path.join(__dirname, 'torrc')}'`);
+            let lines = stdout.split('\n');
+            lines = lines.filter(l => !l.includes('grep'));
+            lines = lines.filter(l => l.trim().length > 0);
+            if (lines.length > 0) {
+                const fragments = lines[0].split(' ');
+                try {
+                    const pid = parseInt(fragments[1].trim());
+                    return pid;
+                } catch (error) {
+                    return -1;
                 }
-                // stdout will be multiple lines, remove every line that contains grep
-                let lines = stdout.split('\n');
-                lines = lines.filter(l => !l.includes('grep'));
-                lines = lines.filter(l => l.trim().length > 0);
-                if (lines.length > 0) {
-                    const fragments = lines[0].split(' ');
-                    try {
-                        const pid = parseInt(fragments[1].trim());
-                        resolve(pid);
-                    } catch (error) {
-                        resolve(-1);
-                    }
-
-                } else {
-                    resolve(-1);
-                }
-            });
-        });
+            }
+        } catch (error) {
+        }
+        return -1;
     }
 
     static async waitTillTorStopped(): Promise<void> {

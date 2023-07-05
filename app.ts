@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer-extra';
 import Stealth from 'puppeteer-extra-plugin-stealth';
 import AdBlock from 'puppeteer-extra-plugin-adblocker';
 import Anon from 'puppeteer-extra-plugin-anonymize-ua';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { TorInstance } from './tor';
 
 puppeteer.use(Anon());
@@ -160,9 +160,22 @@ async function performAction(page: Page, loop: boolean = true, ip: string): Prom
                 if (success) {
                     totalVotes++;
                     status++;
-                    axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
-                        console.log('✅  Voted successfully');
-                    });
+                    try {
+                        axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
+                            console.log('✅  Voted successfully');
+                        });
+                    } catch (error) {
+                        console.log('❌  Could not send success to orcalink.de');
+                        console.log('retrying in 20 seconds');
+                        await wait(20000);
+                        try {
+                            axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
+                                console.log('✅  2nd try: Voted successfully');
+                            });
+                        } catch (error) {
+                            console.log('❌  Aborted send success after 2nd try');
+                        }
+                    }
                 } else {
                     console.log('🔴  Checking for possible issues...');
                     const possibleReasons = [

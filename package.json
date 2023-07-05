@@ -8,7 +8,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "docker build . -t clicker:latest"
   },
   "author": "",
   "license": "ISC",
