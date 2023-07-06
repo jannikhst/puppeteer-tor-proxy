@@ -31,5 +31,8 @@ ENV RUN_HEADLESS=true
 # Copy the application code
 COPY tor.ts app.ts action.ts ip_worker.ts ./
 
+# create a directory for the tor data ./data
+RUN mkdir data
+
 # Specify the command to run your application
 CMD [ "ts-node", "app.ts" ]
