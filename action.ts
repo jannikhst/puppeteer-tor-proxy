@@ -53,7 +53,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
     if (nachtruhe) {
         console.log('🌙  Nachtruhe');
         console.log('Waiting for 10 minutes');
-        await wait(1 * 60 * 1000);
+        await wait(5 * 60 * 1000);
         return;
     }
 
@@ -112,7 +112,8 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
 
     while (true) {
         await clickOnButtonWithText(page, 'Jetzt abstimmen');
-        const success = await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 20000);
+       await wait(1000);
+        const success = await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 34000);
         if (!success) {
             console.log('❌  Could not click consent button');
             throw new Error("cosent button not found");
@@ -124,13 +125,15 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
         await checkForCookieBanner(page);
         const UNSTARTED = '.UNSTARTED';
         let value = UNSTARTED;
-        while (value === UNSTARTED || value === '.UNFINISHED') {
+        let x = 0;
+        while ((value === UNSTARTED || value === '.UNFINISHED') && x < 100) {
+            x++;
             try {
                 value = await page.$eval('.frc-captcha-solution', (el) => el.getAttribute('value')) ?? UNSTARTED;
             } catch (error) {
                 await checkForCookieBanner(page);
             }
-            await wait(300, 500);
+            await wait(500);
         }
         await waitAndClick(page, 'button[type="submit"][id="votingButton"]');
 

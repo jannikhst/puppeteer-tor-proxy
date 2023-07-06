@@ -81,7 +81,7 @@ async function execute(browser: Browser): Promise<void> {
     const concurrentWorkes = 2;
     const promises: Promise<void>[] = [];
     for (let i = 0; i < concurrentWorkes; i++) {
-        promises.push(startPage(browser, concurrentWorkes * 21000));
+        promises.push(startPage(browser));
     }
     await Promise.all(promises);
 }
@@ -89,30 +89,17 @@ async function execute(browser: Browser): Promise<void> {
 main().catch(console.error);
 
 
-async function startPage(browser: Browser, timeoutMs: number): Promise<void> {
+async function startPage(browser: Browser): Promise<void> {
     const page = await browser.newPage();
     try {
         const tor = await ipWorker.getUnusedInstance(62000);
         await useProxy(page, tor.proxyUrl);
         // if performAction takes longer than 3 minutes, abort
-        let timeouted = false;
-        // const timeout = setTimeout(async () => {
-        //     timeouted = true;
-        //     console.log('❌  Timeout');
-        //     try {
-        //         await page.close();
-        //     } catch (error) {
-        //     }
-        // }, timeoutMs);
-
         try {
             await performAction(page, false, tor.info.ip, stats);
         } catch (error) {
             console.log('❌  Aborting action');
         }
-        // if (!timeouted) {
-        //     clearTimeout(timeout);
-        // }
         try {
             await page.close();
         } catch (error) {
