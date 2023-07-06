@@ -29,7 +29,7 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
 ENV RUN_HEADLESS=true
 
 # Copy the application code
-COPY tor.ts app.ts ./
+COPY tor.ts app.ts action.ts ip_worker.ts ./
 
 # Specify the command to run your application
 CMD [ "ts-node", "app.ts" ]
