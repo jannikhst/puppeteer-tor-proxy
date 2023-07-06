@@ -53,7 +53,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
     if (nachtruhe) {
         console.log('🌙  Nachtruhe');
         console.log('Waiting for 10 minutes');
-        await wait(10 * 60 * 1000);
+        await wait(1 * 60 * 1000);
         return;
     }
 
