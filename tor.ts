@@ -79,18 +79,17 @@ export class TorInstance {
 
         const hash = crypto.createHash('sha256').update(txt).digest('hex');
         const torrcFileName = `torrc_${hash}`;
-        const dataDirectory = path.join(__dirname, 'tor_data_' + hash);
+        const dataDirectory = path.join(__dirname, 'data', 'tor_data_' + hash);
         txt += `DataDirectory ${dataDirectory}\n`;
         fs.mkdir(dataDirectory).catch(e => console.log(e));
-        const torrcPath = path.join(__dirname, torrcFileName);
+        const torrcPath = path.join(__dirname, 'data', torrcFileName);
         await fs.writeFile(torrcPath, txt, 'utf-8').catch(e => console.log(e));
         const torPath = await execPromise('which tor').catch(() => {
             console.log('tor not found, please install tor');
             process.exit(1);
         });
 
-        const filePath = path.join(__dirname, torrcFileName);
-        const tor = spawn(torPath.trim(), ['-f', filePath]);
+        const tor = spawn(torPath.trim(), ['-f', torrcPath]);
         let ip = '';
         let port = 0;
         let pid: number | undefined;

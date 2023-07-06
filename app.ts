@@ -24,6 +24,16 @@ const headless: boolean = process.env.RUN_HEADLESS === 'true';
 const ipWorker = new IpWorker();
 
 async function main() {
+    startBrowser();
+    await wait(15000);
+    startBrowser();
+    await wait(15000);
+    startBrowser();
+    await wait(15000);
+    startBrowser();
+}
+
+async function startBrowser() {
     const totalStartTime = Date.now();
     const browser = await buildBrowser();
     const times: number[] = [];
@@ -72,7 +82,7 @@ async function buildBrowser(): Promise<Browser> {
 }
 
 async function execute(browser: Browser): Promise<void> {
-    const concurrentWorkes = 4;
+    const concurrentWorkes = 3;
     const promises: Promise<void>[] = [];
     for (let i = 0; i < concurrentWorkes; i++) {
         promises.push(startPage(browser, concurrentWorkes * 21000));
