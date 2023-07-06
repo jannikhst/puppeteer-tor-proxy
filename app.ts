@@ -26,7 +26,7 @@ const ipWorker = new IpWorker();
 async function main() {
     startBrowser();
     await wait(15000);
-    startBrowser();
+    // startBrowser();
 }
 
 async function startBrowser() {
