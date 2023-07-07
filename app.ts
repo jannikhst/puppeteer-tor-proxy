@@ -26,11 +26,32 @@ const ipWorker = new IpWorker();
 let workerCount = 2;
 let browserCount = 1;
 
-process.on('unhandledRejection', (error) => {
-    startBrowser();
+process.on('unhandledRejection', async (error) => {
     console.log(error);
-    console.log('Restarting browser...');
+    await wait(3000);
+    console.log('checking browser count...');
+    const openBrowserCount = await getOpenBrowserCount();
+    console.log(`Currently ${openBrowserCount} browsers open`);
+    if (openBrowserCount < browserCount) {
+        console.log('Restarting browser...');
+        startBrowser();
+    }
 });
+
+
+async function getOpenBrowserCount() {
+    const chromiumFolderPath = puppeteer.executablePath().replace('chrome.exe', '');
+    const browserDirectories = await fs.readdir(chromiumFolderPath);
+
+    const openBrowserCount = (await Promise.all(browserDirectories.map(async directory => {
+        const directoryPath = `${chromiumFolderPath}/${directory}`;
+        const devProfileExists = await fs.access(`${directoryPath}/.dev_profile`).then(() => true).catch(() => false);
+        return devProfileExists;
+    }))).filter(Boolean).length;
+
+    return openBrowserCount;
+}
+
 
 async function main() {
     await fs.readFile('./worker.config', 'utf-8').then((data) => {
