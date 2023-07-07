@@ -107,7 +107,8 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
                 }
             }
         } catch (error) {
-
+            console.log('❌  Error while checking for success');
+            console.log(error);
         }
     });
 
