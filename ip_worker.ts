@@ -5,7 +5,7 @@ import { TorConfig, TorInstance } from "./tor";
 export class IpWorker {
     private torInstances: { [key: string]: TorInstance } = {};
 
-    async createInstance(): Promise<TorInstance> {
+    async createInstance(): Promise<void> {
         console.log('🛜  Creating tor instance...');
         const config: TorConfig = {
             ExitNodes: ['de'],
@@ -25,7 +25,7 @@ export class IpWorker {
             this.torInstances[endpoint] = tor;
             console.log(`🤖  Created tor instance ${tor.info.info}`);
             await registerIp(endpoint);
-            return tor;
+            return;
         }
     }
 
@@ -49,7 +49,8 @@ export class IpWorker {
             console.log(`🛜  Reusing tor instance ${ip}`);
             return this.torInstances[ip];
         }
-        return await this.createInstance();
+        await this.createInstance();
+        return await this.getUnusedInstance(unused);
     }
 }
 
