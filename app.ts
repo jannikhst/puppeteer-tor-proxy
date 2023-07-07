@@ -6,6 +6,7 @@ import useProxy from 'puppeteer-page-proxy';
 import { performAction, wait } from './action';
 import { Browser, Page } from 'puppeteer';
 import { IpWorker } from './ip_worker';
+import fs from 'fs/promises';
 
 puppeteer.use(Anon());
 puppeteer.use(Stealth());
@@ -24,9 +25,27 @@ const headless: boolean = process.env.RUN_HEADLESS === 'true';
 const ipWorker = new IpWorker();
 
 const workerCount = 2;
-const browserCount = 1;
+let browserCount = 1;
 
 async function main() {
+    await fs.readFile('./worker.config', 'utf-8').then((data) => {
+        const lines = data.split('\n');
+        for (const line of lines) {
+            const fragments = line.split('=');
+            if (fragments.length === 2) {
+                const key = fragments[0].trim();
+                const value = fragments[1].trim();
+                if (key === 'browsers') {
+                    browserCount = parseInt(value);
+                } else if (key === 'workers') {
+                    browserCount = parseInt(value);
+                }
+            }
+        }
+    }).catch((error) => {
+        console.log(error);
+    });
+
     const totalStartTime = Date.now();
     for (let i = 0; i < browserCount; i++) {
         startBrowser();

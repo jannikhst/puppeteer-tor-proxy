@@ -72,6 +72,11 @@ export async function reportGeoIssue(ip: string): Promise<void> {
     await axios.get(url);
 }
 
+export async function reportAlreadyUsed(ip: string): Promise<void> {
+    const url = base + '/used-issue?ip=' + ip;
+    await axios.get(url);
+}
+
 async function registerIp(ip: string): Promise<void> {
     const url = base + '/register-ip?ip=' + ip;
     await axios.get(url);

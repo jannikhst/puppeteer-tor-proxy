@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Page } from "puppeteer";
 import { Stats } from "./app";
-import { reportGeoIssue } from "./ip_worker";
+import { reportAlreadyUsed, reportGeoIssue } from "./ip_worker";
 
 async function checkIfServerDown(page: Page): Promise<boolean> {
     // check if url is https://www.antenne.de/programm/aktionen/pausenhofkonzerte/uebersicht
@@ -95,7 +95,10 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
                             console.log(`❌  Issue detected: ${reason}`);
                             status--;
                             if (reason === 'IP-Adresse außerhalb von Deutschland') {
-                               await reportGeoIssue(ip);
+                                await reportGeoIssue(ip);
+                            }
+                            if (reason === '1 Stimme innerhalb von 1 Minute') {
+                                await reportAlreadyUsed(ip);
                             }
                             break;
                         }
@@ -112,7 +115,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
 
     while (true) {
         await clickOnButtonWithText(page, 'Jetzt abstimmen');
-       await wait(1000);
+        await wait(1000);
         const success = await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 34000);
         if (!success) {
             console.log('❌  Could not click consent button');
