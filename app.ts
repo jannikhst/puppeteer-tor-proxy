@@ -7,7 +7,6 @@ import { performAction, wait } from './action';
 import { Browser, Page } from 'puppeteer';
 import { IpWorker } from './ip_worker';
 import fs from 'fs/promises';
-
 puppeteer.use(Anon());
 puppeteer.use(Stealth());
 puppeteer.use(AdBlock());
@@ -26,6 +25,12 @@ const ipWorker = new IpWorker();
 
 let workerCount = 2;
 let browserCount = 1;
+
+process.on('unhandledRejection', (error) => {
+    startBrowser();
+    console.log(error);
+    console.log('Restarting browser...');
+});
 
 async function main() {
     await fs.readFile('./worker.config', 'utf-8').then((data) => {
