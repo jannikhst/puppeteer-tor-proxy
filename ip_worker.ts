@@ -5,7 +5,7 @@ import { TorConfig, TorInstance } from "./tor";
 export class IpWorker {
     private torInstances: { [key: string]: TorInstance } = {};
 
-    async createInstance(): Promise<void> {
+    async createInstance(): Promise<TorInstance> {
         console.log('🛜  Creating tor instance...');
         const config: TorConfig = {
             ExitNodes: ['de'],
@@ -25,7 +25,7 @@ export class IpWorker {
             this.torInstances[endpoint] = tor;
             console.log(`🤖  Created tor instance ${tor.info.info}`);
             await registerIp(endpoint);
-            return;
+            return tor;
         }
     }
 
@@ -49,8 +49,7 @@ export class IpWorker {
             console.log(`🛜  Reusing tor instance ${ip}`);
             return this.torInstances[ip];
         }
-        await this.createInstance();
-        return await this.getUnusedInstance(unused);
+        return await this.createInstance();
     }
 }
 
@@ -74,7 +73,7 @@ export async function reportGeoIssue(ip: string): Promise<void> {
 }
 
 export async function reportAlreadyUsed(ip: string): Promise<void> {
-    const url = base + '/used-issue?ip=' + ip;
+    const url = base + '/used-?ip=' + ip;
     await axios.get(url);
 }
 
