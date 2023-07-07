@@ -24,7 +24,7 @@ const stats: Stats = {
 const headless: boolean = process.env.RUN_HEADLESS === 'true';
 const ipWorker = new IpWorker();
 
-const workerCount = 2;
+let workerCount = 2;
 let browserCount = 1;
 
 async function main() {
@@ -38,7 +38,7 @@ async function main() {
                 if (key === 'browsers') {
                     browserCount = parseInt(value);
                 } else if (key === 'workers') {
-                    browserCount = parseInt(value);
+                    workerCount = parseInt(value);
                 }
             }
         }
