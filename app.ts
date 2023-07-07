@@ -23,37 +23,60 @@ const stats: Stats = {
 const headless: boolean = process.env.RUN_HEADLESS === 'true';
 const ipWorker = new IpWorker();
 
+const workerCount = 2;
+const browserCount = 1;
+
 async function main() {
-    startBrowser();
-    await wait(15000);
-    // startBrowser();
+    const totalStartTime = Date.now();
+    for (let i = 0; i < browserCount; i++) {
+        startBrowser();
+        await wait(15000);
+    }
+    while (true) {
+        await wait(15000);
+        printVotesPerminute(stats, totalStartTime);
+    }
 }
 
 async function startBrowser() {
-    const totalStartTime = Date.now();
+    try {
+        await executeBrowser();
+    } catch (error) {
+    }
+    startBrowser();
+}
+
+
+async function executeBrowser(): Promise<void> {
     const browser = await buildBrowser();
-    const times: number[] = [];
-    while (true) {
-        console.log('---------------------------------');
-        const start = Date.now();
-        await execute(browser);
-        const end = Date.now();
-        printVotesPerminute(stats, totalStartTime);
-        times.push(end - start);
-        console.log(`Took ${end - start}ms for iteration`);
-        if (times.length > 30) {
-            times.shift();
+    try {
+        const times: number[] = [];
+        while (true) {
+            console.log('---------------------------------');
+            const start = Date.now();
+            await execute(browser);
+            const end = Date.now();
+            times.push(end - start);
+            console.log(`Took ${end - start}ms for iteration`);
+            if (times.length > 30) {
+                times.shift();
+            }
+            const avg = times.reduce((a, b) => a + b, 0) / times.length;
+            console.log(`Average: ${Math.round(avg / 1000)}s`);
+            const totalVotes = stats.totalVotes;
+            const totalAttempts = stats.totalAttempts;
+            const quota = totalVotes / totalAttempts;
+            // in percent
+            console.log(`total votes: ${totalVotes}`);
+            console.log(`total attempts: ${totalAttempts}`);
+            console.log(`success rate: ${Math.round(quota * 100)}%`);
+            console.log('---------------------------------\n\n');
         }
-        const avg = times.reduce((a, b) => a + b, 0) / times.length;
-        console.log(`Average: ${Math.round(avg / 1000)}s`);
-        const totalVotes = stats.totalVotes;
-        const totalAttempts = stats.totalAttempts;
-        const quota = totalVotes / totalAttempts;
-        // in percent
-        console.log(`total votes: ${totalVotes}`);
-        console.log(`total attempts: ${totalAttempts}`);
-        console.log(`success rate: ${Math.round(quota * 100)}%`);
-        console.log('---------------------------------\n\n');
+    } catch (error) {
+        console.log(error);
+        await browser.close();
+        await wait(8000);
+        console.log('Restarting browser');
     }
 }
 
@@ -61,7 +84,8 @@ function printVotesPerminute(stats: Stats, start: number) {
     const { totalVotes } = stats;
     const end = Date.now();
     const votesPerMin = totalVotes / ((end - start) / 1000 / 60);
-    console.log(`Current votes per minute: ${Math.round(votesPerMin)}`);
+    const roundWithOneDecimal = Math.round(votesPerMin * 10) / 10;
+    console.log(`Current votes per minute: ${roundWithOneDecimal}`);
 }
 
 
@@ -78,7 +102,7 @@ async function buildBrowser(): Promise<Browser> {
 }
 
 async function execute(browser: Browser): Promise<void> {
-    const concurrentWorkes = 2;
+    const concurrentWorkes = workerCount;
     const promises: Promise<void>[] = [];
     for (let i = 0; i < concurrentWorkes; i++) {
         promises.push(startPage(browser));
