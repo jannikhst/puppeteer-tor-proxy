@@ -25,32 +25,20 @@ const ipWorker = new IpWorker();
 
 let workerCount = 2;
 let browserCount = 1;
+let currentlyOpenbrowsers = 0;
 
 process.on('unhandledRejection', async (error) => {
     console.log(error);
     await wait(3000);
     console.log('checking browser count...');
-    const openBrowserCount = await getOpenBrowserCount();
-    console.log(`Currently ${openBrowserCount} browsers open`);
-    if (openBrowserCount < browserCount) {
+    console.log(`Currently ${currentlyOpenbrowsers} browsers open`);
+    if (currentlyOpenbrowsers < browserCount) {
         console.log('Restarting browser...');
         startBrowser();
     }
 });
 
 
-async function getOpenBrowserCount() {
-    const chromiumFolderPath = puppeteer.executablePath().replace('chrome.exe', '');
-    const browserDirectories = await fs.readdir(chromiumFolderPath);
-
-    const openBrowserCount = (await Promise.all(browserDirectories.map(async directory => {
-        const directoryPath = `${chromiumFolderPath}/${directory}`;
-        const devProfileExists = await fs.access(`${directoryPath}/.dev_profile`).then(() => true).catch(() => false);
-        return devProfileExists;
-    }))).filter(Boolean).length;
-
-    return openBrowserCount;
-}
 
 
 async function main() {
@@ -87,6 +75,7 @@ async function startBrowser() {
     try {
         await executeBrowser();
     } catch (error) {
+        currentlyOpenbrowsers--;
     }
     startBrowser();
 }
@@ -94,6 +83,7 @@ async function startBrowser() {
 
 async function executeBrowser(): Promise<void> {
     const browser = await buildBrowser();
+    currentlyOpenbrowsers++;
     try {
         const times: number[] = [];
         while (true) {
