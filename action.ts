@@ -30,6 +30,12 @@ async function checkIfSuccess(page: Page): Promise<boolean> {
     return success1 !== null && success2;
 }
 
+async function getIssue(page: Page): Promise<string> {
+    const firstParagraphElement = await page.$('fieldset.c-form__inner p');
+    const pElement = firstParagraphElement ? await page.evaluate(element => element.textContent?.trim(), firstParagraphElement) : undefined;
+    return pElement || '';
+}
+
 async function checkForIssue(page: Page, reason: string): Promise<boolean> {
     const success1 = await page.$('svg.c-form__message-icon use[href$="#warning"]');
     const h3Elements = await page.$$eval('h3', (elements) => {
@@ -59,6 +65,24 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
 
     let status = 0;
 
+
+    function voteSuccess() {
+        axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
+            console.log('✅  Voted successfully');
+        }).catch(() => {
+            console.log('❌  Could not send success to orcalink.de');
+            console.log('retrying in 20 seconds');
+            wait(20000).then(() => {
+                axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
+                    console.log('✅  2nd try: Voted successfully');
+                }).catch(() => {
+                    console.log('❌  Aborted send success after 2nd try');
+                });
+            });
+        });
+    }
+
+
     await page.setRequestInterception(true);
     page.on('response', async (response) => {
         try {
@@ -70,40 +94,45 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
                 if (success) {
                     stats.totalVotes++;
                     status++;
-                    axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
-                        console.log('✅  Voted successfully');
-                    }).catch(() => {
-                        console.log('❌  Could not send success to orcalink.de');
-                        console.log('retrying in 20 seconds');
-                        wait(20000).then(() => {
-                            axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
-                                console.log('✅  2nd try: Voted successfully');
-                            }).catch(() => {
-                                console.log('❌  Aborted send success after 2nd try');
-                            });
-                        });
-                    });
+                    voteSuccess();
                 } else {
                     console.log('🔴  Checking for possible issues...');
+                    const REASON_GEO = 'IP-Adresse außerhalb von Deutschland';
+                    const REASON_ALREADY_USED = '1 Stimme innerhalb von 1 Minute';
                     const possibleReasons = [
-                        'IP-Adresse außerhalb von Deutschland',
-                        '1 Stimme innerhalb von 1 Minute',
+                        REASON_GEO,
+                        REASON_ALREADY_USED,
                     ];
+                    let detected = false;
                     for (const reason of possibleReasons) {
                         success = await checkForIssue(page, reason);
                         if (success) {
                             console.log(`❌  Issue detected: ${reason}`);
-                            status--;
-                            if (reason === 'IP-Adresse außerhalb von Deutschland') {
+                            if (reason === REASON_GEO) {
                                 await reportGeoIssue(ip);
+                                detected = true;
                             }
-                            if (reason === '1 Stimme innerhalb von 1 Minute') {
+                            if (reason === REASON_ALREADY_USED) {
                                 await reportAlreadyUsed(ip);
+                                detected = true;
                             }
                             break;
                         }
                         console.log(`▸ ${reason} is not the issue`);
                     }
+                    if (!detected) {
+                        console.log('❌  Could not detect issue');
+                        const issue = await getIssue(page);
+                        const successreason = 'Wir haben deine Stimme gezählt.'
+                        if (issue.includes(successreason)) {
+                            console.log('No issues detected, html is just weird 😅');
+                            voteSuccess();
+                            stats.totalVotes++;
+                            status++;
+                        }
+                        console.log(`❌  this might be the issue: ${issue}`);
+                    }
+                    status--;
                 }
             }
         } catch (error) {
