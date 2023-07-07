@@ -29,7 +29,7 @@ ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
 ENV RUN_HEADLESS=true
 
 # Copy the application code
-COPY tor.ts app.ts action.ts ip_worker.ts ./
+COPY tor.ts app.ts action.ts ip_worker.ts worker.config ./
 
 # create a directory for the tor data ./data
 RUN mkdir data
