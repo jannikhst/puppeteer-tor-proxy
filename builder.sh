@@ -1,6 +1,5 @@
 git pull
 
-./stopClickers.sh
 
 # Prompt for browsers value
 read -p "Enter the number of browsers: " browsers
@@ -19,6 +18,12 @@ echo "Config file updated successfully."
 
 # Build the Docker image
 docker build . -t clicker:latest
+
+echo "Docker image built successfully."
+echo "Stopping all running clickers..."
+./stopClickers.sh
+
+echo "Starting $browsers browsers and $workers workers in $clickers clickers..."
 
 # Start the clickers
 for ((i=1; i<=$clickers; i++))

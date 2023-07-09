@@ -85,5 +85,5 @@ async function registerIp(ip: string): Promise<void> {
 async function getGeoIssues(): Promise<string[]> {
     const url = base;
     const res = await axios.get(url);
-    return res.data.geoIssues ?? [];
+    return [...(res.data.geoIssues ?? []), ...(res.data.tempBlocked ?? [])];
 }
