@@ -151,7 +151,7 @@ main().catch(console.error);
 async function startPage(browser: Browser): Promise<void> {
     const page = await browser.newPage();
     try {
-        const tor = await ipWorker.getUnusedInstance(62000);
+        const tor = await ipWorker.getUnusedInstance(58000);
         await useProxy(page, tor.proxyUrl);
         // if performAction takes longer than 3 minutes, abort
         try {
