@@ -2,7 +2,6 @@ import axios from "axios";
 import { Page } from "puppeteer";
 import { Stats } from "./app";
 import { reportAlreadyUsed, reportGeoIssue } from "./ip_worker";
-import fs from 'fs/promises';
 
 async function checkIfServerDown(page: Page): Promise<boolean> {
     // check if url is https://www.antenne.de/programm/aktionen/pausenhofkonzerte/uebersicht
@@ -78,19 +77,34 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
         "tiqcdn",
     ];
 
+    const blockRequests = [
+        'https://www.antenne.de/dist/websites/asap-v21-latin-700.woff2',
+        'https://www.antenne.de/logos/google-play-store/badge.svg',
+        'https://www.antenne.de/logos/apple-app-store/badge.svg',
+        'https://app.usercentrics.eu/browser-ui/latest/bundle.js',
+        'https://www.antenne.de/logos/station-antenne-bayern/station.svg',
+        'https://www.antenne.de/api/channels',
+        'https://www.antenne.de/api/xtras',
+        'https://www.antenne.de/api/breaking-news',
+        'https://www.antenne.de/api/metadata/now',
+        'https://www.antenne.de/dist/websites/main.1dc3ugqcre7o.css',
+    ];
+
     page.on("request", (request) => {
         const requestUrl = request.url();
         if (!request.isInterceptResolutionHandled())
-          if (
-            blockResourceType.includes(request.resourceType()) ||
-            blockResourceName.some((resource) => requestUrl.includes(resource))
-          ) {
-            request.abort();
-            console.log("🚫  Aborted request:", requestUrl);
-          } else {
-            request.continue();
-          }
-      });
+            if (
+                blockResourceType.includes(request.resourceType()) ||
+                blockResourceName.some((resource) => requestUrl.includes(resource)) ||
+                requestUrl.endsWith('.webp') ||
+                requestUrl.endsWith('datastream?&platformkey=web-antenne-de')||
+                blockRequests.some((resource) => requestUrl.includes(resource))
+            ) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+    });
 
     await page.goto('https://www.antenne.de/programm/aktionen/pausenhofkonzerte/schulen/10782-stdtisches-bertolt-brecht-gymnasium-mnchen', {
         waitUntil: 'load',
