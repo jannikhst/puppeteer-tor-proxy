@@ -2,6 +2,7 @@ import axios from "axios";
 import { Page } from "puppeteer";
 import { Stats } from "./app";
 import { reportAlreadyUsed, reportGeoIssue } from "./ip_worker";
+import fs from 'fs/promises';
 
 async function checkIfServerDown(page: Page): Promise<boolean> {
     // check if url is https://www.antenne.de/programm/aktionen/pausenhofkonzerte/uebersicht
@@ -50,6 +51,47 @@ async function checkForIssue(page: Page, reason: string): Promise<boolean> {
 
 
 export async function performAction(page: Page, loop: boolean = true, ip: string, stats: Stats): Promise<void> {
+
+
+    await page.setRequestInterception(true);
+
+    const blockResourceType = ["image", "media", "font"];
+    const blockResourceName = [
+        "quantserve",
+        "adzerk",
+        "doubleclick",
+        "adition",
+        "exelator",
+        "sharethrough",
+        "cdn.api.twitter",
+        "google-analytics",
+        "googletagmanager",
+        "google",
+        "fontawesome",
+        "facebook",
+        "analytics",
+        "optimizely",
+        "clicktale",
+        "mixpanel",
+        "zedo",
+        "clicksor",
+        "tiqcdn",
+    ];
+
+    page.on("request", (request) => {
+        const requestUrl = request.url();
+        if (!request.isInterceptResolutionHandled())
+          if (
+            blockResourceType.includes(request.resourceType()) ||
+            blockResourceName.some((resource) => requestUrl.includes(resource))
+          ) {
+            request.abort();
+            console.log("🚫  Aborted request:", requestUrl);
+          } else {
+            request.continue();
+          }
+      });
+
     await page.goto('https://www.antenne.de/programm/aktionen/pausenhofkonzerte/schulen/10782-stdtisches-bertolt-brecht-gymnasium-mnchen', {
         waitUntil: 'load',
         timeout: 30000,
@@ -83,7 +125,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
     }
 
 
-    await page.setRequestInterception(true);
+
     page.on('response', async (response) => {
         try {
             const url = response.url();
@@ -149,10 +191,10 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
         const success = await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 34000);
         if (!success) {
             console.log('❌  Could not click consent button');
-            throw new Error("cosent button not found");
+            throw new Error("consent button not found");
         }
         await checkForCookieBanner(page);
-        await waitAndClick(page, 'button[class="frc-button"]');
+        await waitAndClick(page, 'button[class="frc-button"]', 15000);
 
         await clickOnButtonWithText(page, 'Hier klicken zum Start');
         await checkForCookieBanner(page);
@@ -168,7 +210,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
             }
             await wait(500);
         }
-        await waitAndClick(page, 'button[type="submit"][id="votingButton"]');
+        await waitAndClick(page, 'button[type="submit"][id="votingButton"]', 15000);
 
         if (!loop) {
             const maxWaitMs = 10000;
