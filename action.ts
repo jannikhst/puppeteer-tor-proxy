@@ -185,6 +185,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
                             voteSuccess();
                             stats.totalVotes++;
                             status++;
+                            return;
                         }
                         console.log(`❌  this might be the issue: ${issue}`);
                     }
@@ -231,9 +232,10 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
             let x = 0;
             // wait till votesInThisSession is greater than 0
             while (status === 0 && x < maxWaitMs) {
-                await wait(200);
-                x += 200;
+                await wait(500);
+                x += 500;
             }
+            await wait(1000);
             return;
         } else {
             await wait(61000, 64000);
