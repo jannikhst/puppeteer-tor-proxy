@@ -10,9 +10,13 @@ read -p "Enter the number of workers: " workers
 # Prompt for number of clickers
 read -p "Enter the number of clickers to start: " clickers
 
+# ask if the own ip can be used
+read -p "Use own IP? (y/n): " useOwnIp
+
 # Update the config file
 echo "browsers=$browsers" > worker.config
 echo "workers=$workers" >> worker.config
+echo "useOwnIp=$useOwnIp" >> worker.config
 
 echo "Config file updated successfully."
 

@@ -19,6 +19,10 @@ export class TorInstance {
         this.info = info;
     }
 
+    get isMocked(): boolean {
+        return false;
+    }
+
     get proxyUrl() {
         return `socks5://${this.proxyIp}:${this.port}`;
     }
@@ -275,5 +279,16 @@ class ApiIpResult {
             "query": "XXX.XXX.XXX.XXX"
         };
         return ApiIpResult.fromJson(json);
+    }
+}
+
+
+export class MockedTorInstance extends TorInstance {
+    constructor(ip: string) {
+        super(async () => { }, ip, 0, ApiIpResult.unknown());
+    }
+
+    get isMocked() {
+        return true;
     }
 }

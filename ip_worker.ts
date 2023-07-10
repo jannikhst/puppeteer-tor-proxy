@@ -1,6 +1,6 @@
 import axios from "axios";
 import { wait } from "./action";
-import { TorConfig, TorInstance } from "./tor";
+import { MockedTorInstance, TorConfig, TorInstance } from "./tor";
 
 export class IpWorker {
     private torInstances: { [key: string]: TorInstance } = {};
@@ -55,12 +55,21 @@ export class IpWorker {
         }
     }
 
-    async getUnusedInstance(unused: number): Promise<TorInstance> {
-        const ip = await getUnusedIp(unused, Object.keys(this.torInstances));
+    async getUnusedInstance(unused: number, ownIp?: string): Promise<TorInstance> {
+        const available = Object.keys(this.torInstances);
+        if (ownIp) {
+            available.push(ownIp);
+        }
+        const ip = await getUnusedIp(unused, available);
         if (ip) {
             console.log(`🟢  Got unused IP from manager: ${ip}`);
         } else {
             console.log(`🆕  No unused IP available, creating new one...`);
+        }
+        if (ip !== undefined && ip === ownIp) {
+            // we can use our own IP
+            console.log(`🟢 📣  Using own IP ${ip}`);
+            return new MockedTorInstance(ip);
         }
         if (ip) {
             console.log(`🛜  Reusing tor instance ${ip}`);
@@ -122,3 +131,6 @@ async function checkIfNewTorInstanceIsUsedBySomeoneElse(ip: string, unusedSince:
     const diff = now.getTime() - usedIp.getTime();
     return diff < unusedSince;
 }
+
+
+//git clone https://github.com/jannikhst/unblocked-browser.git && cd unblocked-browser && ./builder.sh

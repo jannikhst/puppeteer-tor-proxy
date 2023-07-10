@@ -7,6 +7,7 @@ import { performAction, wait } from './action';
 import { Browser, Page } from 'puppeteer';
 import { IpWorker } from './ip_worker';
 import fs from 'fs/promises';
+import axios from 'axios';
 puppeteer.use(Anon());
 puppeteer.use(Stealth());
 puppeteer.use(AdBlock());
@@ -26,6 +27,8 @@ const ipWorker = new IpWorker();
 let workerCount = 2;
 let browserCount = 1;
 let currentlyOpenbrowsers = 0;
+let useOwnIp = false;
+let ownIp: string | undefined = undefined;
 
 process.on('unhandledRejection', async (error) => {
     console.log(error);
@@ -53,12 +56,20 @@ async function main() {
                     browserCount = parseInt(value);
                 } else if (key === 'workers') {
                     workerCount = parseInt(value);
+                } else if (key === 'useOwnIp') {
+                    useOwnIp = value === 'y';
                 }
             }
         }
     }).catch((error) => {
         console.log(error);
     });
+
+    if (useOwnIp) {
+        const res = await axios.get('http://ip-api.com/json/');
+        ownIp = res.data.query;
+        console.log(`also using own ip: ${ownIp}`);
+    }
 
     const totalStartTime = Date.now();
     for (let i = 0; i < browserCount; i++) {
@@ -151,8 +162,13 @@ main().catch(console.error);
 async function startPage(browser: Browser): Promise<void> {
     const page = await browser.newPage();
     try {
-        const tor = await ipWorker.getUnusedInstance(58000);
-        await useProxy(page, tor.proxyUrl);
+        const tor = await ipWorker.getUnusedInstance(58000, ownIp);
+        // check if its a mocked tor instance
+        if (!tor.isMocked) {
+            await useProxy(page, tor.proxyUrl);
+        } else { 
+            console.log('using own ip now');
+        }
         // if performAction takes longer than 3 minutes, abort
         try {
             await performAction(page, false, tor.info.ip, stats);
