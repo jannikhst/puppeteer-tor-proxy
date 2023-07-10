@@ -9,7 +9,7 @@ read auth_key
 for ((i=1; i<=$count; i++))
 do
     droplet_name="clicker-$i"
-    user_data="git clone https://github.com/jannikhst/unblocked-browser.git && cd unblocked-browser && ./digital-ocean-autostart"
+    user_data="git clone https://github.com/jannikhst/unblocked-browser.git && cd unblocked-browser && ./digital-ocean-autostart.sh"
 
     payload='{
         "name": "'"$droplet_name"'",
