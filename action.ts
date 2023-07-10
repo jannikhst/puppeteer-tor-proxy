@@ -109,13 +109,13 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
 
 
     function voteSuccess() {
-        axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
+        axios.get('https://orcalink.de/antenne-bayern-2').then(() => {
             console.log('✅  Voted successfully');
         }).catch(() => {
             console.log('❌  Could not send success to orcalink.de');
             console.log('retrying in 20 seconds');
             wait(20000).then(() => {
-                axios.get('https://orcalink.de/antenne-bayern-click').then(() => {
+                axios.get('https://orcalink.de/antenne-bayern-2').then(() => {
                     console.log('✅  2nd try: Voted successfully');
                 }).catch(() => {
                     console.log('❌  Aborted send success after 2nd try');
