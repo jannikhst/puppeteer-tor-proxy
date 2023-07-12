@@ -54,6 +54,15 @@ async function stickySession(stats: Stats) {
 
     await page.setRequestInterception(true);
 
+
+    async function waitIllCloseable(ip: string) {
+        while (tor.info.ip === ip) {
+            await wait(1000);
+        }
+        ipWorker.closeInstance(ip);
+    }
+
+
     page.on('response', async (response) => {
         try {
             const url = response.url();
@@ -79,7 +88,7 @@ async function stickySession(stats: Stats) {
                             console.log(`❌  Issue detected: ${reason}`);
                             if (reason === REASON_GEO) {
                                 await reportGeoIssue(tor.info.ip);
-                                ipWorker.closeInstance(tor.info.ip);
+                                waitIllCloseable(tor.info.ip);
                                 ipWorker.prepareConnections(1);
                                 detected = true;
                             }
@@ -87,7 +96,7 @@ async function stickySession(stats: Stats) {
                                 await reportAlreadyUsed(tor.info.ip);
                                 // flip a coin to decide if we should close the instance
                                 if (Math.random() > 0.5) {
-                                    ipWorker.closeInstance(tor.info.ip);
+                                    waitIllCloseable(tor.info.ip);
                                     await ipWorker.prepareConnections(1);
                                 }
                                 if (Math.random() > 0.7) {
