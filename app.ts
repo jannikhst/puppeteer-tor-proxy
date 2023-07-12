@@ -5,7 +5,7 @@ import Anon from 'puppeteer-extra-plugin-anonymize-ua';
 import useProxy from 'puppeteer-page-proxy';
 import { performAction, wait } from './action';
 import { Browser, Page } from 'puppeteer';
-import { IpWorker } from './ip_worker';
+import { IpWorker, blockIPForOthers, unblockIPForOthers } from './ip_worker';
 import fs from 'fs/promises';
 import axios from 'axios';
 puppeteer.use(Anon());
@@ -29,6 +29,7 @@ let browserCount = 1;
 let currentlyOpenbrowsers = 0;
 let useOwnIp = false;
 let ownIp: string | undefined = undefined;
+let stickToIp: boolean = false;
 
 process.on('unhandledRejection', async (error) => {
     console.log(error);
@@ -58,6 +59,8 @@ async function main() {
                     workerCount = parseInt(value);
                 } else if (key === 'useOwnIp') {
                     useOwnIp = value === 'y';
+                } else if (key === 'stickToIp') {
+                    stickToIp = value === 'y';
                 }
             }
         }
@@ -78,7 +81,7 @@ async function main() {
     }
     while (true) {
         await wait(15000);
-        printVotesPerminute(stats, totalStartTime);
+        printVotesPerMinute(stats, totalStartTime);
     }
 }
 
@@ -126,7 +129,7 @@ async function executeBrowser(): Promise<void> {
     }
 }
 
-function printVotesPerminute(stats: Stats, start: number) {
+function printVotesPerMinute(stats: Stats, start: number) {
     const { totalVotes } = stats;
     const end = Date.now();
     const votesPerMin = totalVotes / ((end - start) / 1000 / 60);
@@ -135,7 +138,7 @@ function printVotesPerminute(stats: Stats, start: number) {
 }
 
 
-async function buildBrowser(): Promise<Browser> {
+export async function buildBrowser(): Promise<Browser> {
     const options = { width: 1920, height: 1080 };
     const browser = await puppeteer.launch({
         headless: headless ? 'new' : false,
@@ -156,14 +159,13 @@ async function execute(browser: Browser): Promise<void> {
     await Promise.all(promises);
 }
 
-main().catch(console.error);
+// main().catch(console.error);
 
 
 async function startPage(browser: Browser): Promise<void> {
     const page = await browser.newPage();
     try {
         const tor = await ipWorker.getUnusedInstance(58000, ownIp);
-        // check if its a mocked tor instance
         if (!tor.isMocked) {
             await useProxy(page, tor.proxyUrl);
         } else { 

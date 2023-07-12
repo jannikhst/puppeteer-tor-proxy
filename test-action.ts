@@ -8,7 +8,6 @@ import axios from "axios";
 let start = Date.now();
 const ipWorker = new IpWorker();
 
-
 function voteSuccess() {
     axios.get('https://orcalink.de/antenne-bayern-2').then(() => {
         console.log('✅  Voted successfully');
