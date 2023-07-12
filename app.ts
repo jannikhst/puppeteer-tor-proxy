@@ -159,7 +159,7 @@ async function execute(browser: Browser): Promise<void> {
     await Promise.all(promises);
 }
 
-// main().catch(console.error);
+main().catch(console.error);
 
 
 async function startPage(browser: Browser): Promise<void> {

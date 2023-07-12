@@ -35,4 +35,4 @@ COPY tor.ts app.ts action.ts ip_worker.ts worker.config test-action.ts ./
 RUN mkdir data
 
 # Specify the command to run your application
-CMD [ "ts-node", "test-action.ts" ]
+CMD [ "ts-node", "app.ts" ]
