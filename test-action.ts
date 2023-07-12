@@ -138,9 +138,9 @@ async function stickySession(stats: Stats) {
 
 
     while (true) {
-        const success = await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 8000);
+        const success = await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 25000);
         if (!success) {
-            await waitAndClick(page, 'button[id="voteAgainButton"]', 500);
+            await waitAndClick(page, 'button[id="voteAgainButton"]', 5000);
             await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 4000);
         }
         await checkForCookieBanner(page);
