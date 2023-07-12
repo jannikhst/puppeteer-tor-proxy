@@ -3,14 +3,14 @@ import { Page } from "puppeteer";
 import { Stats } from "./app";
 import { reportAlreadyUsed, reportGeoIssue } from "./ip_worker";
 
-async function checkIfServerDown(page: Page): Promise<boolean> {
+export async function checkIfServerDown(page: Page): Promise<boolean> {
     // check if url is https://www.antenne.de/programm/aktionen/pausenhofkonzerte/uebersicht
     const url = page.url();
     const isDown = url === 'https://www.antenne.de/programm/aktionen/pausenhofkonzerte/uebersicht';
     return isDown;
 }
 
-async function checkIfNachtruhe(page: Page): Promise<boolean> {
+export async function checkIfNachtruhe(page: Page): Promise<boolean> {
     const svgElement = await page.$('svg.c-form__message-icon use[href$="#moon"]');
     const moonVisible = svgElement !== null;
 
@@ -21,7 +21,7 @@ async function checkIfNachtruhe(page: Page): Promise<boolean> {
     return moonVisible && nachtruheVisible;
 }
 
-async function checkIfSuccess(page: Page): Promise<boolean> {
+export async function checkIfSuccess(page: Page): Promise<boolean> {
     const success1 = await page.$('svg.c-form__message-icon use[href$="#check"]');
     const h3Elements = await page.$$eval('h3', (elements) => {
         return elements.filter((element) => element.textContent?.trim() === 'Das hat geklappt!');
@@ -30,13 +30,13 @@ async function checkIfSuccess(page: Page): Promise<boolean> {
     return success1 !== null && success2;
 }
 
-async function getIssue(page: Page): Promise<string> {
+export async function getIssue(page: Page): Promise<string> {
     const firstParagraphElement = await page.$('fieldset.c-form__inner p');
     const pElement = firstParagraphElement ? await page.evaluate(element => element.textContent?.trim(), firstParagraphElement) : undefined;
     return pElement || '';
 }
 
-async function checkForIssue(page: Page, reason: string): Promise<boolean> {
+export async function checkForIssue(page: Page, reason: string): Promise<boolean> {
     const success1 = await page.$('svg.c-form__message-icon use[href$="#warning"]');
     const h3Elements = await page.$$eval('h3', (elements) => {
         return elements.filter((element) => element.textContent?.trim() === 'Fehler');
@@ -244,7 +244,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
 }
 
 
-async function checkForCookieBanner(page: Page) {
+export async function checkForCookieBanner(page: Page) {
     try {
         const parentElement = await page.$('#usercentrics-root');
         const shadowRoot = await page.evaluateHandle(parent => parent!.shadowRoot, parentElement);
@@ -261,7 +261,7 @@ async function checkForCookieBanner(page: Page) {
     }
 }
 
-async function waitAndClick(page: Page, selector: string, timeout: number = 15000): Promise<boolean> {
+export async function waitAndClick(page: Page, selector: string, timeout: number = 15000): Promise<boolean> {
     try {
         await page.waitForSelector(selector, {
             timeout,
@@ -279,7 +279,7 @@ async function waitAndClick(page: Page, selector: string, timeout: number = 1500
 }
 
 
-async function clickOnButtonWithText(page: Page, text: string): Promise<boolean> {
+export async function clickOnButtonWithText(page: Page, text: string): Promise<boolean> {
     await checkForCookieBanner(page);
     var buttons = await page.$$('button');
     for (var i = 0; i < buttons.length; i++) {

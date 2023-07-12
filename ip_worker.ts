@@ -46,6 +46,16 @@ export class IpWorker {
         }
     }
 
+    async prepareConnections(count: number): Promise<void> {
+        console.log(`🟢  Preparing ${count} connections...`);
+        const tasks: Promise<any>[] = [];
+        for (let i = 0; i < count; i++) {
+            tasks.push(this.createInstance());
+        }
+        await Promise.all(tasks);
+        console.log(`🟢  Prepared ${count} connections.`);
+    }
+
     async closeInstance(endpoint: string): Promise<void> {
         console.log(`🟠 Closing tor instance ${endpoint}`);
         const tor = this.torInstances[endpoint];
@@ -112,6 +122,16 @@ async function getGeoIssues(): Promise<string[]> {
     const url = base;
     const res = await axios.get(url);
     return [...(res.data.geoIssues ?? []), ...(res.data.tempBlocked ?? [])];
+}
+
+export async function blockIPForOthers(ip: string): Promise<void> {
+    const url = base + '/block-ip?ip=' + ip;
+    await axios.get(url);
+}
+
+export async function unblockIPForOthers(ip: string): Promise<void> {
+    const url = base + '/unblock-ip?ip=' + ip;
+    await axios.get(url);
 }
 
 

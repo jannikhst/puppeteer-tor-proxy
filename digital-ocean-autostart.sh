@@ -1,6 +1,7 @@
 echo "browsers=2" > worker.config
 echo "workers=1" >> worker.config
 echo "useOwnIp=y" >> worker.config
+echo "stickToIp=y" >> worker.config
 
 echo "Config file updated successfully."
 
