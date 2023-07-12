@@ -36,7 +36,7 @@ async function stickySession(stats: Stats) {
     console.log('Starting at', ownIp);
     const browser = await buildBrowser();
     const page = await browser.newPage();
-    await ipWorker.prepareConnections(8);
+    await ipWorker.prepareConnections(5);
     start = Date.now();
 
     let tor = await ipWorker.getUnusedInstance(58000);
