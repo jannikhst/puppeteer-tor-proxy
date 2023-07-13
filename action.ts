@@ -216,7 +216,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
         const UNSTARTED = '.UNSTARTED';
         let value = UNSTARTED;
         let x = 0;
-        while ((value === UNSTARTED || value === '.UNFINISHED') && x < 100) {
+        while ((value === UNSTARTED || value === '.UNFINISHED' || value === '.FETCHING') && x < 80) {
             x++;
             try {
                 value = await page.$eval('.frc-captcha-solution', (el) => el.getAttribute('value')) ?? UNSTARTED;

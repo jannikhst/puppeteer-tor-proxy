@@ -19,7 +19,6 @@ read -p "Stick to IPs? (y/n): " stickToIp
 echo "browsers=$browsers" > worker.config
 echo "workers=$workers" >> worker.config
 echo "useOwnIp=$useOwnIp" >> worker.config
-echo "stickToIp=$stickToIp" >> worker.config
 
 echo "Config file updated successfully."
 

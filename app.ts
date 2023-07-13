@@ -139,7 +139,7 @@ function printVotesPerMinute(stats: Stats, start: number) {
 
 
 export async function buildBrowser(): Promise<Browser> {
-    const options = { width: 1920, height: 1080 };
+    const options = { width: 1920 * 0.8, height: 1080 * 0.8 };
     const browser = await puppeteer.launch({
         headless: headless ? 'new' : false,
         args: [
@@ -168,7 +168,7 @@ async function startPage(browser: Browser): Promise<void> {
         const tor = await ipWorker.getUnusedInstance(58000, ownIp);
         if (!tor.isMocked) {
             await useProxy(page, tor.proxyUrl);
-        } else { 
+        } else {
             console.log('using own ip now');
         }
         // if performAction takes longer than 3 minutes, abort
