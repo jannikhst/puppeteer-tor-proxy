@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Page } from "puppeteer";
-import { Stats } from "./app";
+import { Stats, ipWorker } from "./app";
 import { reportAlreadyUsed, reportGeoIssue } from "./ip_worker";
 
 export async function checkIfServerDown(page: Page): Promise<boolean> {
@@ -106,7 +106,10 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
             }
     });
 
-    await page.goto('https://www.antenne.de/programm/aktionen/pausenhofkonzerte/schulen/10782-stdtisches-bertolt-brecht-gymnasium-mnchen', {
+    const isingUrl = 'https://www.antenne.de/programm/aktionen/pausenhofkonzerte/schulen/12545-landschulheim-schlo-ising-am-chiemsee-des-zweckverbands-bayer-landschulheime-gymnasium';
+    const brechtUrl = 'https://www.antenne.de/programm/aktionen/pausenhofkonzerte/schulen/10782-stdtisches-bertolt-brecht-gymnasium-mnchen';
+
+    await page.goto(isingUrl, {
         waitUntil: 'load',
         timeout: 30000,
     });
@@ -123,13 +126,13 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
 
 
     function voteSuccess() {
-        axios.get('https://orcalink.de/antenne-bayern-2').then(() => {
+        axios.get('https://orcalink.de/antenne-bayern-3').then(() => {
             console.log('✅  Voted successfully');
         }).catch(() => {
             console.log('❌  Could not send success to orcalink.de');
             console.log('retrying in 20 seconds');
             wait(20000).then(() => {
-                axios.get('https://orcalink.de/antenne-bayern-2').then(() => {
+                axios.get('https://orcalink.de/antenne-bayern-3').then(() => {
                     console.log('✅  2nd try: Voted successfully');
                 }).catch(() => {
                     console.log('❌  Aborted send success after 2nd try');
@@ -167,6 +170,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
                             if (reason === REASON_GEO) {
                                 await reportGeoIssue(ip);
                                 detected = true;
+                                ipWorker.closeInstance(ip);
                             }
                             if (reason === REASON_ALREADY_USED) {
                                 await reportAlreadyUsed(ip);
