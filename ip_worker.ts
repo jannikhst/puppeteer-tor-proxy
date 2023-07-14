@@ -29,18 +29,24 @@ export class IpWorker {
             await registerIp(endpoint);
 
             console.log(`🟢  Checking waitlist... (${temporaryWaitlist.length} instances)`);
-            for (const instance of temporaryWaitlist) {
-                const check = await checkIfNewTorInstanceIsUsedBySomeoneElse(instance.info.ip, 55000);
-                if (!check) {
-                    console.log(`🟢  Found unused IP in waitlist: ${instance.info.ip}`);
-                    return instance;
-                }
+            const waitListIp = await getUnusedIp(56000, temporaryWaitlist.map(t => t.info.ip));
+            if (waitListIp) {
+                console.log(`🟢  Found unused IP in waitlist: ${waitListIp}`);
+                return tor;
             }
             const check = await checkIfNewTorInstanceIsUsedBySomeoneElse(endpoint, 55000);
             if (check) {
                 temporaryWaitlist.push(tor);
                 console.log(`🟡  Someone else is using this IP, but we keep it open for later...`);
                 continue;
+            } else {
+                // try to reserve it
+                const reserved = await getUnusedIp(55000, [endpoint]);
+                if (reserved === undefined) {
+                    console.log(`🟡  Could not reserve IP, but we keep it open for later...`);
+                    temporaryWaitlist.push(tor);
+                    continue;
+                }
             }
             return tor;
         }

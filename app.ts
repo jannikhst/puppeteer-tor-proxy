@@ -22,7 +22,8 @@ const stats: Stats = {
     totalAttempts: 0,
 };
 const headless: boolean = process.env.RUN_HEADLESS === 'true';
-const ipWorker = new IpWorker();
+export const ipWorker = new IpWorker();
+
 
 let workerCount = 2;
 let browserCount = 1;
