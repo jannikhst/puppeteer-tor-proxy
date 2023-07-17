@@ -2,12 +2,13 @@ import puppeteer from 'puppeteer-extra';
 import Stealth from 'puppeteer-extra-plugin-stealth';
 import AdBlock from 'puppeteer-extra-plugin-adblocker';
 import Anon from 'puppeteer-extra-plugin-anonymize-ua';
-import useProxy from 'puppeteer-page-proxy';
 import { performAction, wait } from './action';
-import { Browser, Page } from 'puppeteer';
-import { IpWorker, blockIPForOthers, unblockIPForOthers } from './ip_worker';
+import { Browser, TimeoutError } from 'puppeteer';
 import fs from 'fs/promises';
 import axios from 'axios';
+import { WebshareProxyProvider } from './webshare_proxy_provider';
+import { EmptyProvider, blockIPForOthers } from './proxy_provider';
+
 puppeteer.use(Anon());
 puppeteer.use(Stealth());
 puppeteer.use(AdBlock());
@@ -22,7 +23,9 @@ const stats: Stats = {
     totalAttempts: 0,
 };
 const headless: boolean = process.env.RUN_HEADLESS === 'true';
-export const ipWorker = new IpWorker();
+
+
+export let ipWorker = new EmptyProvider();
 
 
 let workerCount = 2;
@@ -30,7 +33,7 @@ let browserCount = 1;
 let currentlyOpenbrowsers = 0;
 let useOwnIp = false;
 let ownIp: string | undefined = undefined;
-let stickToIp: boolean = false;
+let fetchProxiesUrl = '';
 
 process.on('unhandledRejection', async (error) => {
     console.log(error);
@@ -43,10 +46,8 @@ process.on('unhandledRejection', async (error) => {
     }
 });
 
-
-
-
 async function main() {
+    console.log('reading config...');
     await fs.readFile('./worker.config', 'utf-8').then((data) => {
         const lines = data.split('\n');
         for (const line of lines) {
@@ -60,14 +61,19 @@ async function main() {
                     workerCount = parseInt(value);
                 } else if (key === 'useOwnIp') {
                     useOwnIp = value === 'y';
-                } else if (key === 'stickToIp') {
-                    stickToIp = value === 'y';
+                } else if (key === 'fetchProxiesUrl') {
+                    fetchProxiesUrl = value;
                 }
             }
         }
     }).catch((error) => {
         console.log(error);
     });
+
+    if (fetchProxiesUrl.includes('https://')) {
+        console.log(`using webshare proxy provider: ${fetchProxiesUrl}`);
+        ipWorker = new WebshareProxyProvider(fetchProxiesUrl);
+    }
 
     if (useOwnIp) {
         const res = await axios.get('http://ip-api.com/json/');
@@ -143,6 +149,7 @@ export async function buildBrowser(): Promise<Browser> {
     const options = { width: 1920 * 0.8, height: 1080 * 0.8 };
     const browser = await puppeteer.launch({
         headless: headless ? 'new' : false,
+        userDataDir: './puppeteer_data',
         args: [
             `--window-size=${options.width},${options.height}`,
             '--no-sandbox',
@@ -160,23 +167,22 @@ async function execute(browser: Browser): Promise<void> {
     await Promise.all(promises);
 }
 
-main().catch(console.error);
-
-
 async function startPage(browser: Browser): Promise<void> {
     const page = await browser.newPage();
     try {
-        const tor = await ipWorker.getUnusedInstance(58000, ownIp);
-        if (!tor.isMocked) {
-            await useProxy(page, tor.proxyUrl);
-        } else {
-            console.log('using own ip now');
-        }
+        const proxy = await ipWorker.getUnusedProxy(58000, ownIp);
+        console.log(proxy);
+        await proxy.applyProxy(page);
         // if performAction takes longer than 3 minutes, abort
         try {
-            await performAction(page, false, tor.info.ip, stats);
-        } catch (error) {
+            await performAction(page, false, proxy.endpointIp, stats);
+        } catch (error:any) {
             console.log('❌  Aborting action');
+            console.log(error);
+            // if error is timeout
+            if (error instanceof TimeoutError) {
+               blockIPForOthers(proxy.endpointIp);
+            }
         }
         try {
             await page.close();
@@ -188,3 +194,4 @@ async function startPage(browser: Browser): Promise<void> {
 }
 
 
+main().catch(console.error);

@@ -5,6 +5,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import net from 'net';
 import crypto from 'crypto';
+import { Page } from 'puppeteer';
+import useProxy from 'puppeteer-page-proxy';
 
 export class TorInstance {
     private onClose: () => Promise<void>;
@@ -25,6 +27,10 @@ export class TorInstance {
 
     get proxyUrl() {
         return `socks5://${this.proxyIp}:${this.port}`;
+    }
+
+    get endpointIp() {
+        return this.info.ip;
     }
 
     close(): Promise<void> {
@@ -153,6 +159,10 @@ export class TorInstance {
             // await removeTorHashData(hash);
         }, ip, port, api);
     }
+
+    async applyProxy(page: Page): Promise<void> {
+        await useProxy(page, this.proxyUrl);
+    }
 }
 
 // async function removeTorHashData(hash: string) {
@@ -215,7 +225,7 @@ export interface TorConfig {
 
 }
 
-class ApiIpResult {
+export class ApiIpResult {
     status: string;
     country: string;
     countryCode: string;
@@ -261,6 +271,10 @@ class ApiIpResult {
         return `[${this.ip}]: ${this.country}, ${this.region}, ${this.city}`;
     }
 
+    get endpointIp() {
+        return this.query;
+    }
+
     static unknown(): ApiIpResult {
         const json = {
             "status": "success",
@@ -290,5 +304,9 @@ export class MockedTorInstance extends TorInstance {
 
     get isMocked() {
         return true;
+    }
+
+    async applyProxy(page: Page): Promise<void> {
+        console.log('no proxy applied');
     }
 }

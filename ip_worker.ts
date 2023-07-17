@@ -1,11 +1,12 @@
 import axios from "axios";
 import { wait } from "./action";
 import { MockedTorInstance, TorConfig, TorInstance } from "./tor";
+import { Proxy, ProxyProvider, base, getUnusedIp } from "./proxy_provider";
 
-export class IpWorker {
+export class IpWorker extends ProxyProvider{
     private torInstances: { [key: string]: TorInstance } = {};
 
-    async createInstance(): Promise<TorInstance> {
+    async createProxy(): Promise<Proxy> {
         console.log('🛜  Creating tor instance...');
         const config: TorConfig = {
             ExitNodes: ['de'],
@@ -52,17 +53,17 @@ export class IpWorker {
         }
     }
 
-    async prepareConnections(count: number): Promise<void> {
+    async prepare(count: number): Promise<void> {
         console.log(`🟢  Preparing ${count} connections...`);
         const tasks: Promise<any>[] = [];
         for (let i = 0; i < count; i++) {
-            tasks.push(this.createInstance());
+            tasks.push(this.createProxy());
         }
         await Promise.all(tasks);
         console.log(`🟢  Prepared ${count} connections.`);
     }
 
-    async closeInstance(endpoint: string): Promise<void> {
+    async closeProxy(endpoint: string): Promise<void> {
         console.log(`🟠 Closing tor instance ${endpoint}`);
         const tor = this.torInstances[endpoint];
         delete this.torInstances[endpoint];
@@ -71,12 +72,12 @@ export class IpWorker {
         }
     }
 
-    async getUnusedInstance(unused: number, ownIp?: string): Promise<TorInstance> {
+    async getUnusedProxy(age: number, ownIp?: string): Promise<Proxy> {
         const available = Object.keys(this.torInstances);
         if (ownIp) {
             available.push(ownIp);
         }
-        const ip = await getUnusedIp(unused, available);
+        const ip = await getUnusedIp(age, available);
         if (ip) {
             console.log(`🟢  Got unused IP from manager: ${ip}`);
         } else {
@@ -91,33 +92,10 @@ export class IpWorker {
             console.log(`🛜  Reusing tor instance ${ip}`);
             return this.torInstances[ip];
         }
-        return await this.createInstance();
+        return await this.createProxy();
     }
 }
 
-
-const base = 'https://ips.derdorsch.de';
-// const base = 'http://localhost:3000';
-
-
-
-async function getUnusedIp(ms: number, available: string[]): Promise<string | undefined> {
-    const joined = available.join(',');
-    const availableParam = joined.length > 0 ? '&available=' + joined : '';
-    const url = base + '/unused-ip?ms=' + ms + availableParam;
-    const res = await axios.get(url);
-    return res.data.ip;
-}
-
-export async function reportGeoIssue(ip: string): Promise<void> {
-    const url = base + '/geo-issue?ip=' + ip;
-    await axios.get(url);
-}
-
-export async function reportAlreadyUsed(ip: string): Promise<void> {
-    const url = base + '/used-issue?ip=' + ip;
-    await axios.get(url);
-}
 
 async function registerIp(ip: string): Promise<void> {
     const url = base + '/register-ip?ip=' + ip;
@@ -130,15 +108,6 @@ async function getGeoIssues(): Promise<string[]> {
     return [...(res.data.geoIssues ?? []), ...(res.data.tempBlocked ?? [])];
 }
 
-export async function blockIPForOthers(ip: string): Promise<void> {
-    const url = base + '/block-ip?ip=' + ip;
-    await axios.get(url);
-}
-
-export async function unblockIPForOthers(ip: string): Promise<void> {
-    const url = base + '/unblock-ip?ip=' + ip;
-    await axios.get(url);
-}
 
 
 async function checkIfNewTorInstanceIsUsedBySomeoneElse(ip: string, unusedSince: number): Promise<boolean> {

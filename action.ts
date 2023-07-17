@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Page } from "puppeteer";
 import { Stats, ipWorker } from "./app";
-import { reportAlreadyUsed, reportGeoIssue } from "./ip_worker";
+import { reportAlreadyUsed, reportGeoIssue } from "./proxy_provider";
 
 export async function checkIfServerDown(page: Page): Promise<boolean> {
     // check if url is https://www.antenne.de/programm/aktionen/pausenhofkonzerte/uebersicht
@@ -97,7 +97,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
                 blockResourceType.includes(request.resourceType()) ||
                 blockResourceName.some((resource) => requestUrl.includes(resource)) ||
                 requestUrl.endsWith('.webp') ||
-                requestUrl.endsWith('datastream?&platformkey=web-antenne-de')||
+                requestUrl.endsWith('datastream?&platformkey=web-antenne-de') ||
                 blockRequests.some((resource) => requestUrl.includes(resource))
             ) {
                 request.abort();
@@ -170,7 +170,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
                             if (reason === REASON_GEO) {
                                 await reportGeoIssue(ip);
                                 detected = true;
-                                ipWorker.closeInstance(ip);
+                                ipWorker.closeProxy(ip);
                             }
                             if (reason === REASON_ALREADY_USED) {
                                 await reportAlreadyUsed(ip);
@@ -203,18 +203,15 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
     });
 
     stats.totalAttempts++;
-
     while (true) {
         await clickOnButtonWithText(page, 'Jetzt abstimmen');
         await wait(1000);
-        const success = await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 34000);
-        if (!success) {
-            console.log('❌  Could not click consent button');
-            throw new Error("consent button not found");
-        }
         await checkForCookieBanner(page);
-        await waitAndClick(page, 'button[class="frc-button"]', 15000);
-
+        const success = await waitAndClick(page, 'button[class="frc-button"]', 15000);
+        if (!success) {
+            await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 4000);
+            await waitAndClick(page, 'button[class="frc-button"]', 3000);
+        }
         await clickOnButtonWithText(page, 'Hier klicken zum Start');
         await checkForCookieBanner(page);
         const UNSTARTED = '.UNSTARTED';
@@ -267,10 +264,13 @@ export async function checkForCookieBanner(page: Page) {
 
 export async function waitAndClick(page: Page, selector: string, timeout: number = 15000): Promise<boolean> {
     try {
-        await page.waitForSelector(selector, {
+        const element = await page.waitForSelector(selector, {
             timeout,
             visible: true,
         });
+        if (element) {
+            await element.scrollIntoView();
+        }
         await wait(800);
         await checkForCookieBanner(page);
         await page.click(selector);
