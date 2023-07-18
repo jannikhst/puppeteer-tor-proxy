@@ -207,10 +207,10 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
         await clickOnButtonWithText(page, 'Jetzt abstimmen');
         await wait(1000);
         await checkForCookieBanner(page);
-        const success = await waitAndClick(page, 'button[class="frc-button"]', 15000);
+        const success = await waitAndClick(page, 'button[class="frc-button"]', 2000);
         if (!success) {
-            await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 4000);
-            await waitAndClick(page, 'button[class="frc-button"]', 3000);
+            await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 8000);
+            await waitAndClick(page, 'button[class="frc-button"]', 2000);
         }
         await clickOnButtonWithText(page, 'Hier klicken zum Start');
         await checkForCookieBanner(page);
