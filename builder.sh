@@ -38,3 +38,5 @@ for ((i=1; i<=$clickers; i++))
 do
     ./startClicker.sh
 done
+
+docker image prune -f
