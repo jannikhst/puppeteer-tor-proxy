@@ -214,6 +214,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
             await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 1000);
             clicked = await waitAndClick(page, 'button[class="frc-button"]', 1000);
         }
+        console.log('🔵  Waiting for captcha to be solved...');
         await clickOnButtonWithText(page, 'Hier klicken zum Start');
         await checkForCookieBanner(page);
         const UNSTARTED = '.UNSTARTED';
@@ -228,6 +229,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
             }
             await wait(500);
         }
+        console.log('🔵  Captcha solved');
         await waitAndClick(page, 'button[type="submit"][id="votingButton"]', 15000);
 
         if (!loop) {
