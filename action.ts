@@ -208,9 +208,11 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
         await wait(1000);
         await checkForCookieBanner(page);
         let clicked = false;
-        while (!clicked) {
-            waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 500);
-            clicked = await waitAndClick(page, 'button[class="frc-button"]', 500);
+        let count = 0;
+        while (!clicked && count < 10) {
+            count++;
+            await waitAndClick(page, 'label.c-embed__optinbutton.c-button.has-clickhandler', 1000);
+            clicked = await waitAndClick(page, 'button[class="frc-button"]', 1000);
         }
         await clickOnButtonWithText(page, 'Hier klicken zum Start');
         await checkForCookieBanner(page);
