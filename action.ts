@@ -111,7 +111,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
 
     await page.goto(isingUrl, {
         waitUntil: 'load',
-        timeout: 30000,
+        timeout: 15000,
     });
 
     const nachtruhe = await checkIfNachtruhe(page);
