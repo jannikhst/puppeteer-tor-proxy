@@ -268,13 +268,10 @@ export async function checkForCookieBanner(page: Page) {
 
 export async function waitAndClick(page: Page, selector: string, timeout: number = 15000): Promise<boolean> {
     try {
-        const element = await page.waitForSelector(selector, {
+        await page.waitForSelector(selector, {
             timeout,
             visible: true,
         });
-        if (element) {
-            await element.scrollIntoView();
-        }
         await wait(800);
         await checkForCookieBanner(page);
         await page.click(selector);

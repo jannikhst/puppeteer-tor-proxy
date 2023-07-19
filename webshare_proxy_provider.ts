@@ -5,6 +5,7 @@ import useProxy from "puppeteer-page-proxy";
 export class WebshareProxyProvider extends ProxyProvider {
     private fetchProxiesUrl: string;
     private proxies: { [key: string]: Proxy } = {};
+    private lastfetch: Date | undefined = undefined;
 
     constructor(fetchProxiesUrl: string) {
         super();
@@ -15,9 +16,19 @@ export class WebshareProxyProvider extends ProxyProvider {
     async closeProxy(endpoint: string): Promise<void> { }
 
     async createProxy(): Promise<any> {
+        if (this.lastfetch) {
+            const now = new Date();
+            const diff = now.getTime() - this.lastfetch.getTime();
+            // only fetch if last fetch was more than 15 minutes ago
+            if (diff < 15 * 60 * 1000) {
+                return;
+            }
+        }
+
         // load all proxies from txt file
         // format: ip:port:username:password
         const res = await axios.get(this.fetchProxiesUrl);
+        this.lastfetch = new Date();
         const lines = res.data.split('\n') as string[];
         const formatted = lines.map(l => formatSocks5Url(l));
         for (const format of formatted) {
