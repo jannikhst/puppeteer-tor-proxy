@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Proxy, ProxyProvider, getUnusedIp } from "./proxy_provider";
 import useProxy from "puppeteer-page-proxy";
+import { wait } from "./action";
 
 export class WebshareProxyProvider extends ProxyProvider {
     private fetchProxiesUrl: string;
@@ -21,6 +22,7 @@ export class WebshareProxyProvider extends ProxyProvider {
             const diff = now.getTime() - this.lastfetch.getTime();
             // only fetch if last fetch was more than 15 minutes ago
             if (diff < 15 * 60 * 1000) {
+                await wait(3000);
                 return;
             }
         }
