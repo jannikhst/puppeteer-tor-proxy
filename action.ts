@@ -228,6 +228,7 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
             try {
                 value = await page.$eval('.frc-captcha-solution', (el) => el.getAttribute('value')) ?? UNSTARTED;
             } catch (error) {
+                console.log('🔴  Error while waiting for captcha to be solved: ', error);
                 await checkForCookieBanner(page);
             }
             await wait(500);
