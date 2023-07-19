@@ -176,17 +176,18 @@ async function startPage(browser: Browser): Promise<void> {
         // if performAction takes longer than 3 minutes, abort
         try {
             await performAction(page, false, proxy.endpointIp, stats);
-        } catch (error:any) {
+        } catch (error: any) {
             console.log('❌  Aborting action');
             console.log(error);
             // if error is timeout
             if (error instanceof TimeoutError) {
-               blockIPForOthers(proxy.endpointIp);
+                blockIPForOthers(proxy.endpointIp);
             }
         }
         try {
             await page.close();
         } catch (error) {
+            console.log(error);
         }
     } catch (error) {
         console.log(error);

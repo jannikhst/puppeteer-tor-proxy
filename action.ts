@@ -222,6 +222,9 @@ export async function performAction(page: Page, loop: boolean = true, ip: string
         let x = 0;
         while ((value === UNSTARTED || value === '.UNFINISHED' || value === '.FETCHING') && x < 80) {
             x++;
+            if (x % 10 === 0) { 
+                console.log(`🔵  Still waiting for captcha to be solved... (${x*500}ms)`);
+            }
             try {
                 value = await page.$eval('.frc-captcha-solution', (el) => el.getAttribute('value')) ?? UNSTARTED;
             } catch (error) {
